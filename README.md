@@ -115,7 +115,7 @@ root, reads from `data/`, and writes its figure(s) to `figures/`. Outputs:
 |---|---|
 | `fig1_maps_amocmode.py` | `Fig1_Rev_AMOCmodes.pdf`, `Fig1_Rev_VarianteDischarge.pdf` |
 | `fig2_dye_regions.py` | `Fig2_Rev_DyeRegions.pdf`, `Fig2_Rev_Supp_Discharge.pdf` |
-| `fig3_dye_propagation.py` | `Fig3_DyePropagation.pdf` |
+| `fig3_dye_propagation.py` | `Fig3_DyePropagation.pdf`, `SFig3_DyePropagation_MedSea.pdf` (supplementary: EIS_MedSea / dye00, excluded from main Fig. 3) |
 | `fig4_fig5_scenario_maps.py` | `Fig5_Rev_ScenarioMap.pdf`, `Fig5_Rev_ScenarioMap_predict.pdf`, `Fig5_Rev_Ratio.pdf`, `Fig4_Rev_GIN_IRD.pdf`, `Fig4_Rev_GIN_IRD_predict_combined.pdf`, `Fig4_Rev_Scatter_RegionCompared_predicted.pdf` |
 | `fig6_trajectories.py` | `Fig6_Rev_Trajectories.pdf` |
 | `fig7_proxy_summary.py` | `Fig7_a_ProxySites_Map.pdf`, `Fig7_b_ProxySites_Bars_var.pdf`, `SFig7_b_ProxySites_Bars_var.pdf` + per-scenario `*_proxy_d18O_contributions.csv` |
@@ -178,6 +178,11 @@ meltwater forcing.
   years 450–499 statistics window is entirely missing; it is not used by any figure.
 - The per-scenario mean/std fields are **surface-only** (top depth level) to keep the
   bundle light — this is all the figures require.
+- **Repository assembly.** This standalone figure-scripts repository was compiled with the
+  assistance of Anthropic's Claude Science: converting the original analysis notebooks to
+  self-contained scripts, reducing the raw model output to a light plotting-only data
+  bundle, completing the local helper modules, and writing this documentation. All
+  scientific content, model simulations, and figure designs are the authors' own.
 
 ---
 
