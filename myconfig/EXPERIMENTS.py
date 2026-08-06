@@ -1,6 +1,6 @@
 # All Experiments of the Meltmodel Paper (Paleooceanography, Chapter 4 Thesis LE). Checked and Revised (5.Juli 2026)
-EXPERIMENTS = 
-{'cold': {'20.7k': {'exp': 'xpujf',
+EXPERIMENTS = {
+ 'cold': {'20.7k': {'exp': 'xpujf',
    'nyears': 500,
    'first_year': 9391,
    'last_year': 9890},
