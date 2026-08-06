@@ -735,3 +735,435 @@ rename_dict = dict(zip(old_names, new_names))
 ds_dye_region = ds_dye_region.rename(rename_dict)
 
 ds_dye_region
+
+
+# --- cell 6 (Supplementary: MedSea dye propagation) ---
+# --------------------------------------------------
+# Plot mean dye fields + uncertainty stippling
+# + Cold - Zonal difference column
+# --------------------------------------------------
+
+import matplotlib.pyplot as plt
+import cartopy.crs as ccrs
+import numpy as np
+import matplotlib as mpl
+from matplotlib.colors import ListedColormap
+import warnings
+import cartopy.feature as cfeature
+
+# Dye and d18O information
+from myconfig.DYES import DYE_TABLE
+#DYE_TO_REGION = dict(zip(DYE_TABLE["dye"], DYE_TABLE["region"]))
+
+projection_map = ccrs.NearsidePerspective(
+    central_longitude=-35,
+    central_latitude=45,
+    satellite_height=11000000,
+)
+
+# -------------------------
+# Dye settings
+# -------------------------
+
+bounds = np.arange(0, 0.101, 0.005)
+std_threshold = 0.01
+
+normdye_a = mpl.colors.BoundaryNorm(
+    boundaries=bounds,
+    ncolors=cmc.batlowW_r.N,
+)
+
+# Difference colour scale
+diff_lim = 0.05
+diff_bounds = np.arange(-diff_lim, diff_lim + 0.005, 0.005)
+
+diff_norm = mpl.colors.BoundaryNorm(
+    boundaries=diff_bounds,
+    ncolors=cmc.broc.N,
+)
+
+dye_list = (
+    "dye00",
+    "dye01",
+)
+
+states = ["merid", "zonal", "cold"]
+
+
+region_names = DYE_TABLE["region"].tolist()[0:2]
+
+region_colors = {
+    region: color
+    for region, color in zip(
+        region_names,
+        [
+            "tab:blue",
+            "tab:orange",
+            "tab:green",
+            "tab:red",
+            "tab:purple",
+            "tab:brown",
+            "tab:pink",
+            "tab:olive",
+            "tab:cyan",
+        ],
+    )
+}
+
+
+
+
+# -------------------------
+# Figure
+# -------------------------
+
+figMap, axMap = plt.subplots(
+    nrows=len(dye_list),
+    ncols=5,
+    subplot_kw={"projection": projection_map},
+    figsize=(9, 5.7),
+)
+
+axMap = np.atleast_2d(axMap)
+
+
+# --------------------------------------------------
+# First column
+# --------------------------------------------------
+
+# ==================================================
+# Plot regions
+# ==================================================
+
+for i, region in enumerate(region_names):
+
+    # -------------------------
+    # Region mask
+    # -------------------------
+
+    mask = ds_dye_region[region].isel(t=0,depth=0)
+
+
+    # ensure binary mask
+    mask = xr.where(mask > 0, 1, np.nan)
+
+
+    # -------------------------
+    # Plot region
+    # -------------------------
+
+    axMap[i,0].pcolormesh(
+        ds_dye_region.longitude,
+        ds_dye_region.latitude,
+        mask,
+        transform=ccrs.PlateCarree(),
+        cmap=ListedColormap(
+            [region_colors[region]]
+        ),
+        shading="nearest",
+        zorder=3,
+    )
+
+
+    # -------------------------
+    # Land background
+    # -------------------------
+
+    axMap[i,0].add_feature(
+        cfeature.LAND,
+        facecolor="0.85",
+        edgecolor="none",
+        zorder=1,
+    )
+
+
+    axMap[i,0].coastlines(
+        resolution="110m",
+        linewidth=0.6,
+        color="k",
+        zorder=4,
+    )
+
+
+    # -------------------------
+    # Region name box
+    # -------------------------
+
+    axMap[i,0].text(
+        0.5,
+        0.5,
+        region,
+        transform=axMap[i,0].transAxes,
+        ha="center",
+        va="top",
+        fontsize=10,
+        bbox=dict(
+            boxstyle="round,pad=0.3",
+            facecolor="white",
+            edgecolor=region_colors[region],
+            linewidth=2,
+        ),
+        zorder=20,
+    )
+
+
+
+
+
+# --------------------------------------------------
+# Second three columns
+# --------------------------------------------------
+
+for j, mode in enumerate(states):
+
+    for i, dye in enumerate(dye_list):
+
+        ax = axMap[i, j+1]
+
+        # -------------------------
+        # Mean field
+        # -------------------------
+
+        mean_field = dye_field_lookup[mode]["mean"][dye]
+
+        
+
+        with warnings.catch_warnings():
+            warnings.filterwarnings(
+                "ignore",
+                message="invalid value encountered in divide",
+                category=RuntimeWarning,
+            )
+        
+
+        mean_smooth = (
+            mean_field
+            .rolling(latitude=3, longitude=3, center=True,min_periods=1)
+            .mean()
+        )
+
+        pcm = ax.pcolormesh(
+            mean_smooth.longitude,
+            mean_smooth.latitude,
+            mean_smooth,
+            transform=ccrs.PlateCarree(),
+            norm=normdye_a,
+            #cmap= "Greys", 
+            cmap= cmc.batlowW_r,
+            shading="nearest",
+            zorder=2,
+        )
+
+        # -------------------------
+        # Experiment spread
+        # -------------------------
+
+        std_field = dye_field_lookup[mode]["std"][dye]
+
+        # Stipple (legacy?)
+        #stipple_stride = 4
+
+        #mask = std_field > std_threshold
+
+       # xx, yy = np.meshgrid(
+       #     mean_field.longitude,
+       #     mean_field.latitude,
+       # )
+
+        #ax.scatter(
+        #xx[::stipple_stride, ::stipple_stride][mask.values[::stipple_stride, ::stipple_stride]],
+        #yy[::stipple_stride, ::stipple_stride][mask.values[::stipple_stride, ::stipple_stride]],
+        #s=0.1,
+        #color="k",
+        #marker=".",
+        #transform=ccrs.PlateCarree(),
+        #zorder=5,
+        #)
+
+
+
+        # -------------------------
+        # Uncertainty contour
+        # -------------------------
+        
+        std_field = dye_field_lookup[mode]["std"][dye]
+        
+        # only show uncertainty where signal exists
+        uncertainty_mask = (
+            (std_field > std_threshold)
+            &
+            (mean_field > 0.005)
+        )
+        
+        
+        ax.contour(
+            mean_field.longitude,
+            mean_field.latitude,
+            uncertainty_mask,
+            levels=[0.5],
+            colors="blue",
+            linewidths=0.4,
+            linestyles="-",
+            transform=ccrs.PlateCarree(),
+            zorder=5,
+        )
+
+        ax.coastlines(
+            resolution="110m",
+            linewidth=0.8,
+            color="k",
+            alpha=0.8,
+            zorder=4,
+        )
+
+# --------------------------------------------------
+# Fourth column: Cold - Zonal
+# --------------------------------------------------
+
+for i, dye in enumerate(dye_list):
+
+    ax = axMap[i, 4]
+
+    cold = (
+        dye_field_lookup["cold"]["mean"][dye]
+        .rolling(latitude=3, longitude=3, center=True)
+        .mean()
+    )
+
+    zonal = (
+        dye_field_lookup["zonal"]["mean"][dye]
+        .rolling(latitude=3, longitude=3, center=True)
+        .mean()
+    )
+
+    diff = cold - zonal
+
+    pcm_diff = ax.pcolormesh(
+        diff.longitude,
+        diff.latitude,
+        diff,
+        transform=ccrs.PlateCarree(),
+        cmap=cmc.vik_r,
+        norm=diff_norm,
+        shading="nearest",
+        zorder=2,
+    )
+
+    # Optional significance stippling:
+    #
+    # pooled_std = np.sqrt(
+    #     dye_field_lookup["cold"]["std"][dye]**2 +
+    #     dye_field_lookup["zonal"]["std"][dye]**2
+    # )
+    #
+    # mask = abs(diff) < pooled_std
+    #
+    # xx, yy = np.meshgrid(diff.longitude, diff.latitude)
+    #
+    # ax.scatter(
+    #     xx[::2, ::2][mask.values[::2, ::2]],
+    #     yy[::2, ::2][mask.values[::2, ::2]],
+    #     s=0.25,
+    #     color="grey",
+    #     marker=".",
+    #     transform=ccrs.PlateCarree(),
+    #     zorder=5,
+    # )
+
+    ax.coastlines(
+        resolution="110m",
+        linewidth=0.8,
+        color="k",
+        alpha=0.8,
+        zorder=4,
+    )
+
+# --------------------------------------------------
+# Titles
+# --------------------------------------------------
+
+titles = ["Region","Merid", "Zonal", "Cold", "Cold - Zonal"]
+
+for j, title in enumerate(titles):
+    axMap[0, j].set_title(title)
+
+
+#for i, label in enumerate(region_names):
+#
+#    axMap[i, 0].text(
+#        -0.18,          # left of the first column
+#        0.5,            # vertically centred
+#        label,
+#        transform=axMap[i, 0].transAxes,
+#        ha="right",
+#        va="center",
+#        fontsize=9,
+#    )
+
+
+# --------------------------------------------------
+# Region labels + row colour indicators
+# --------------------------------------------------
+
+
+# --------------------------------------------------
+# Colorbar: mean dye fields
+# --------------------------------------------------
+
+cb = figMap.colorbar(
+    pcm,
+    ax=axMap[:1, 4],
+    location="right",
+    #shrink=0.85,
+    pad=0.03,
+    extend="max",
+    boundaries=bounds,
+    ticks=bounds[::2],
+)
+
+cb.set_label("Normalized dye intensity")
+
+cb.ax.set_yticklabels(
+    [f"{b:.3f}" for b in bounds[::2]]
+)
+
+# --------------------------------------------------
+# Colorbar: difference
+# --------------------------------------------------
+
+cb_diff = figMap.colorbar(
+    pcm_diff,
+    ax=axMap[1:, 4],
+    location="right",
+    #shrink=0.85,
+    pad=0.08,
+    extend="both",
+    boundaries=diff_bounds,
+    ticks=diff_bounds[::2],
+)
+
+cb_diff.set_label("Difference (Cold − Zonal)")
+
+cb_diff.ax.set_yticklabels(
+    [f"{b:.2f}" for b in diff_bounds[::2]]
+)
+
+# --------------------------------------------------
+# Layout
+# --------------------------------------------------
+
+plt.subplots_adjust(
+    left=0,
+    right=0.86,
+    wspace=0.05,
+    hspace=0.02,
+    top=0.98,
+    bottom=0.02,
+)
+
+
+plt.savefig(
+     "figures/SFig3_DyePropagation_MedSea.pdf",
+     dpi=300,
+     bbox_inches="tight",
+ )

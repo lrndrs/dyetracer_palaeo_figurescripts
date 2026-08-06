@@ -744,8 +744,10 @@ ax.spines['top'].set_visible(False)
 ax.spines['right'].set_visible(False)
 ax.set_axisbelow(True)
 
-# Labels
-labels = scenarios
+# Labels — explicit ordered list so each label matches its line style
+# (highlight_times [-17800,-18200,-19400,-20700] -> line_styles ["-","--","-.",":"]).
+# NB: `scenarios` is a set and iterates in arbitrary order, which scrambled the legend.
+labels = ["17.8k", "18.2k", "19.4k", "20.7k"]
 for t, ls, lab in zip(highlight_times, line_styles, labels):
     ax.axvline(x=t/1000, color="black", linestyle=ls, linewidth=2, label=lab)
 
