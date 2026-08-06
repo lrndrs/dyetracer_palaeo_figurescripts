@@ -1,0 +1,27 @@
+name: dyetracer
+# Conda environment for the dyetracer_palaeo figure scripts.
+#   conda env create -f environment.yml
+#   conda activate dyetracer
+# Version floors reflect the environment the scripts were tested in
+# (Python 3.11, conda-forge). Newer releases should also work.
+channels:
+  - conda-forge
+dependencies:
+  - python=3.11
+  - xarray>=2024.0
+  - numpy>=1.26
+  - pandas>=2.0
+  - scipy>=1.11
+  - matplotlib>=3.8
+  - cartopy>=0.22
+  - geopandas>=0.14
+  - regionmask>=0.11
+  - netcdf4>=1.6
+  - cftime>=1.6
+  - dask>=2024.0          # required by run_pipeline (xr.open_dataset(..., chunks="auto"))
+  - shapely>=2.0
+  - pyproj>=3.6
+  - tqdm>=4.66
+  - pip
+  - pip:
+      - cmcrameri          # scientific colour maps (Crameri); not on conda-forge for all platforms

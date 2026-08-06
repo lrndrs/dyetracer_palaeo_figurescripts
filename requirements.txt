@@ -1,0 +1,21 @@
+# pip requirements for the dyetracer_palaeo figure scripts (Python 3.11).
+#   pip install -r requirements.txt
+# Version floors reflect the tested environment; newer releases should also work.
+# NOTE: cartopy and geopandas pull in compiled geospatial libraries (GEOS, PROJ,
+# GDAL). If pip cannot build them on your platform, use environment.yml (conda)
+# instead, which resolves those binaries from conda-forge.
+xarray>=2024.0
+numpy>=1.26
+pandas>=2.0
+scipy>=1.11
+matplotlib>=3.8
+cartopy>=0.22
+geopandas>=0.14
+regionmask>=0.11
+netCDF4>=1.6
+cftime>=1.6
+dask>=2024.0
+shapely>=2.0
+pyproj>=3.6
+tqdm>=4.66
+cmcrameri
