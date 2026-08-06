@@ -1,6 +1,86 @@
 from pathlib import Path
+import numpy as np
 import xarray as xr
 from tqdm import tqdm
+
+
+def area_weighted_mean(
+    field,
+    lon_min, lon_max,
+    lat_min, lat_max,
+    lsm=None,
+    return_unweighted=False,
+):
+    """
+    Cosine-latitude area-weighted mean of a 2-D field over a lon/lat box.
+
+    Factors the regional-averaging logic used by ``build_d18O_mean_lookup``
+    into a standalone, importable function.
+
+    Parameters
+    ----------
+    field : xarray.DataArray
+        2-D field with latitude/longitude coordinates (named either
+        ``latitude``/``longitude`` or ``lat``/``lon``).
+    lon_min, lon_max, lat_min, lat_max : float
+        Bounding box in degrees. Longitudes may be given in either the
+        -180..180 or 0..360 convention; the box is matched to whichever
+        convention ``field`` uses, and boxes that wrap the 0/360 meridian
+        are handled by concatenation.
+    lsm : xarray.DataArray, optional
+        Land-sea mask aligned to ``field``. Where ``lsm == 0`` the field is
+        kept; elsewhere it is set to NaN (i.e. ``lsm == 0`` marks ocean).
+    return_unweighted : bool, default False
+        If True, also return the plain (unweighted) box mean.
+
+    Returns
+    -------
+    float, or (float, float)
+        Area-weighted mean, or ``(weighted, unweighted)`` when
+        ``return_unweighted`` is True.
+    """
+    # --- optional land-sea mask ---
+    if lsm is not None:
+        field = xr.where(lsm == 0, field, np.nan)
+
+    # --- detect coordinate names ---
+    lat_name = "latitude" if "latitude" in field.coords else "lat"
+    lon_name = "longitude" if "longitude" in field.coords else "lon"
+
+    # --- match the box to the field's longitude convention ---
+    lon_values = field[lon_name]
+    if lon_values.max() > 180:          # field uses 0-360
+        lon_min_sel = lon_min % 360
+        lon_max_sel = lon_max % 360
+    else:                               # field uses -180..180
+        lon_min_sel = lon_min
+        lon_max_sel = lon_max
+
+    # --- select the region (handling 0/360 wrap) ---
+    if lon_min_sel <= lon_max_sel:
+        region = field.sel({
+            lon_name: slice(lon_min_sel, lon_max_sel),
+            lat_name: slice(lat_min, lat_max),
+        })
+    else:
+        region = xr.concat(
+            [
+                field.sel({lon_name: slice(lon_min_sel, 360),
+                           lat_name: slice(lat_min, lat_max)}),
+                field.sel({lon_name: slice(0, lon_max_sel),
+                           lat_name: slice(lat_min, lat_max)}),
+            ],
+            dim=lon_name,
+        )
+
+    # --- cosine-latitude area weighting ---
+    weights = np.cos(np.deg2rad(region[lat_name]))
+    mean_val = region.weighted(weights).mean().item()
+
+    if return_unweighted:
+        return mean_val, region.mean().item()
+    return mean_val
+
 
 def build_d18O_lookup(df, column, dye_index=None):
     """
@@ -104,69 +184,19 @@ def build_d18O_mean_lookup(
 
             #field = d18O_results[mode][exp]["d18O"].isel(depth_1=0)
 
-            # ---
-            # Apply land-sea mask
-            # ---
-
-            
-            if lsm is not None:
-                field = xr.where(lsm==0, field,np.nan) 
-            
-
             # -----------------------------------------
-            # area-weighted mean
+            # area-weighted mean over the region box
+            # (land-sea masking, longitude-convention and 0/360-wrap
+            #  handling, and cos-lat weighting all live in
+            #  area_weighted_mean)
             # -----------------------------------------
-
-            # Detect coordinate names
-            lat_name = "latitude" if "latitude" in field.coords else "lat"
-            lon_name = "longitude" if "longitude" in field.coords else "lon"
-
-            # -----------------------------------------
-            # Handle longitude convention
-            # -----------------------------------------
-            
-            lon_values = field[lon_name]
-            
-            # data uses 0-360 convention
-            if lon_values.max() > 180:
-            
-                lon_min_sel = lon_min % 360
-                lon_max_sel = lon_max % 360
-            
-            else:
-                lon_min_sel = lon_min
-                lon_max_sel = lon_max
-
-
-            if lon_min_sel <= lon_max_sel:
-
-                region = field.sel(
-                    {
-                        lon_name: slice(lon_min_sel, lon_max_sel),
-                        lat_name: slice(lat_min, lat_max),
-                    }
-                )
-            
-            else:
-                # region crosses 0/360 boundary
-                region = xr.concat(
-                    [
-                        field.sel({lon_name: slice(lon_min_sel, 360),
-                                   lat_name: slice(lat_min, lat_max)}),
-                        field.sel({lon_name: slice(0, lon_max_sel),
-                                   lat_name: slice(lat_min, lat_max)})
-                    ],
-                    dim=lon_name
-                )
-
-
-            # Apply Area-Weighting
-            weights = np.cos(np.deg2rad(region[lat_name]))
-
-
-
-            mean_val = region.weighted(weights).mean().item()
-            mean_val_old = region.mean().item()
+            mean_val, mean_val_old = area_weighted_mean(
+                field,
+                lon_min, lon_max,
+                lat_min, lat_max,
+                lsm=lsm,
+                return_unweighted=True,
+            )
 
             mean_lookup[mode][scenario] = mean_val
             mean_lookup_old[mode][scenario] = mean_val_old
@@ -175,12 +205,6 @@ def build_d18O_mean_lookup(
     return mean_lookup, mean_lookup_old
 
 
-
-
-
-
-import numpy as np
-import xarray as xr
 
 
 def compute_d18O(ds, lookup, dyes=None, suffix=""):
@@ -232,14 +256,6 @@ def compute_d18O(ds, lookup, dyes=None, suffix=""):
 
 
 ### Main Pipeline
-
-
-
-from pathlib import Path
-import xarray as xr
-from tqdm import tqdm
-
-from mymodules.d18O_computation import compute_d18O
 
 
 def build_d18O_results(
@@ -312,6 +328,7 @@ def build_d18O_results(
                 continue
 
             outfile = outdir / state / f"{scenario}_d18O.nc"
+            outfile.parent.mkdir(parents=True, exist_ok=True)
 
             # -------------------------------
             # Existing file

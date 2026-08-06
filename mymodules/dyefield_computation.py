@@ -463,7 +463,15 @@ from pathlib import Path
 from tqdm import tqdm
 import pickle
 import xarray as xr
-import pylaeoclim_leeds.util_hadcm3 as util
+# pylaeoclim_leeds is only needed to *rebuild* the AMOC lookup from raw HadCM3
+# output (util.ButterLowPass, below). The figure scripts ship the precomputed
+# amoc_lookup.pkl, so this import is not required for plotting. Import it lazily
+# so the module loads without pylaeoclim_leeds installed; the error is only
+# raised if a rebuild is actually triggered (cache missing / overwrite=True).
+try:
+    import pylaeoclim_leeds.util_hadcm3 as util
+except ImportError:
+    util = None
 
 
 
@@ -521,6 +529,15 @@ def build_amoc_lookup(
     # -------------------------------------------------
 
     database = "/nfs/see-fs-01_users/eelse/database"
+
+    if util is None:
+        raise ImportError(
+            "Rebuilding the AMOC lookup requires the external 'pylaeoclim_leeds' "
+            "package (util.ButterLowPass), which is not installed. The figure "
+            "scripts ship the precomputed amoc_lookup.pkl in data/intermediates/ "
+            "and do not need a rebuild; ensure that file is present and call with "
+            "overwrite=False."
+        )
 
     filt = util.ButterLowPass(
         order=1,
