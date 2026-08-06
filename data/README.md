@@ -1,10 +1,12 @@
 # Plotting data — manifest and provenance
 
+[![DOI](https://zenodo.org/badge/1324888921.svg)](https://doi.org/10.5281/zenodo.21828703)
+
 This folder holds the light, plotting-ready data for the
 `dyetracer_palaeo_figurescripts` figure scripts. **The data payload is not stored in
 git** (`.gitignore`: `data/*`) — download it from the Zenodo record and unpack it here.
 
-> **Zenodo DOI:** {{ZENODO_DOI}}
+> **Zenodo DOI:** [10.5281/zenodo.21828703](https://doi.org/10.5281/zenodo.21828703)
 
 Total ~45 MB, reduced from ~735 MB of raw HadCM3 output — only the fields needed for
 plotting are included.

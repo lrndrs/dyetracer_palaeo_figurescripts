@@ -1,5 +1,7 @@
 # dyetracer_palaeo_figurescripts
 
+[![DOI](https://zenodo.org/badge/1324888921.svg)](https://doi.org/10.5281/zenodo.21828703)
+
 Figure-generating scripts and light plotting data for the manuscript
 
 > **Tracing Meltwater from Northern Ice Sheets to Palaeoclimate Archives During the
@@ -126,7 +128,7 @@ root, reads from `data/`, and writes its figure(s) to `figures/`. Outputs:
 
 Plotting data are archived on Zenodo alongside this code:
 
-> **DOI:** {{ZENODO_DOI}}
+> **DOI:** [10.5281/zenodo.21828703](https://doi.org/10.5281/zenodo.21828703)
 
 The data payload is deliberately excluded from git (`.gitignore`: `data/*`); only
 `data/README.md` — the data manifest and provenance — is tracked. Download the data
@@ -189,4 +191,4 @@ meltwater forcing.
 ## Citation
 
 If you use these scripts or data, please cite the manuscript (above) and the Zenodo
-archive ({{ZENODO_DOI}}).
+archive (10.5281/zenodo.21828703).
