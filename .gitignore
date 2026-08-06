@@ -9,6 +9,9 @@ figures/
 # Local cartopy coastline cache (see README; set CARTOPY_DATA_DIR)
 .cartopy_cache/
 
+# Data bundle tarballs (uploaded to Zenodo, not tracked in git)
+*.tar.gz
+
 # Plotting data lives on Zenodo (see data/README.md), not in git.
 # Ignore the data payload but keep the folder's README tracked.
 data/*
