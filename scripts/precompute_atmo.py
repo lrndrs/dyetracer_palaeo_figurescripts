@@ -39,9 +39,38 @@ def _bandpass(data, low=LOW, high=HIGH, order=ORDER):
     b, a = signal.butter(order, [low, high], btype="band")
     return signal.filtfilt(b, a, np.asarray(data), axis=0)
 
+def _pick_msl_var(ds):
+    """Return the MSL DataArray. Prefer the notebook's `p_dm_msl`; otherwise
+    fall back to the single time-varying pressure field in the file."""
+    if "p_dm_msl" in ds.data_vars:
+        return ds["p_dm_msl"]
+    cands = [v for v in ds.data_vars
+             if "t" in ds[v].dims and ("msl" in v.lower() or "slp" in v.lower()
+                                       or "pmsl" in v.lower())]
+    if len(cands) == 1:
+        return ds[cands[0]]
+    raise KeyError(
+        f"Could not identify the MSL variable in {list(ds.data_vars)}. "
+        "Expected `p_dm_msl`; edit _pick_msl_var() to name the right field.")
+
+def _assert_daily(ds):
+    """Storm-track band-pass is only meaningful on sub-monthly timesteps.
+    Stop loudly if the file turns out to hold true monthly means."""
+    t = ds["t"].values
+    if t.size < 4:
+        raise ValueError(f"MSL file has only {t.size} timesteps; need daily data.")
+    dt_days = np.median(np.diff(t)).astype("timedelta64[h]") / np.timedelta64(24, "h")
+    if dt_days > 20:
+        raise ValueError(
+            f"MSL timestep is ~{float(dt_days):.0f} days — this looks like monthly "
+            "means, not daily data. The 2-6 day storm-track band-pass requires "
+            "daily timesteps and would be meaningless here. Point --base at a file "
+            "with daily resolution.")
+    return float(dt_days)
+
 def storm_track_variance(ds_slp, months=None):
     """2-6 day band-pass variance of MSL (hPa^2). months=[12,1,2,3] for DJFM."""
-    da = ds_slp.p_dm_msl / 100.0            # Pa -> hPa
+    da = _pick_msl_var(ds_slp) / 100.0      # Pa -> hPa
     if months is not None:
         da = da.sel(t=da.t.dt.month.isin(months))
     anom = da - da.mean(dim="t")
@@ -50,7 +79,12 @@ def storm_track_variance(ds_slp, months=None):
         input_core_dims=[["t"]], output_core_dims=[["t"]],
         vectorize=True, dask="parallelized", keep_attrs=True,
     )
-    return filt.var(dim="t")                # (msl, lat, lon)
+    var = filt.var(dim="t")                 # (msl?, lat, lon)
+    # drop any singleton vertical/level dim so output is 2-D (lat, lon)
+    for d in list(var.dims):
+        if d not in ("latitude", "longitude") and var.sizes[d] == 1:
+            var = var.isel({d: 0}, drop=True)
+    return var
 
 def _concat_modes(per_mode):
     """Stack a dict {mode: DataArray} along a new 'mode' coord."""
@@ -85,9 +119,13 @@ def main():
         v850[mode] = ds_v["v_mm_p"].mean(dim="t").isel(p=0)
 
         # --- Storm track: band-pass MSL variance, annual + DJFM --------------
-        ds_slp = xr.open_dataset(p("msl.daily"))
-        st_ann[mode]  = storm_track_variance(ds_slp).isel(msl=0)
-        st_djfm[mode] = storm_track_variance(ds_slp, months=[12, 1, 2, 3]).isel(msl=0)
+        # NB: the daily MSL time series is stored in a file *named* .mslp.monthly
+        # (the "monthly" tag is a naming convention; the timesteps are daily).
+        ds_slp = xr.open_dataset(p("mslp.monthly"))
+        dt = _assert_daily(ds_slp)          # stop if this is truly monthly means
+        print(f"       MSL timestep ~{dt:.1f} day(s)", flush=True)
+        st_ann[mode]  = storm_track_variance(ds_slp)
+        st_djfm[mode] = storm_track_variance(ds_slp, months=[12, 1, 2, 3])
 
         # --- Sea-ice monthly climatology (for 50% extent overlay) ------------
         ds_ice = xr.open_dataset(p("iceconc.monthly"))
