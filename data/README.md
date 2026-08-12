@@ -9,7 +9,10 @@ git** (`.gitignore`: `data/*`) — download it from the Zenodo record and unpack
 > **Zenodo DOI:** [10.5281/zenodo.21828703](https://doi.org/10.5281/zenodo.21828703)
 
 Total ~45 MB, reduced from ~735 MB of raw HadCM3 output — only the fields needed for
-plotting are included.
+plotting are included. This bundle now also contains the data for the **supplementary
+figures** (the `intermediates/atmo/` fields for the AMOC-mode atmosphere figures — surface
+air temperature, 850 hPa wind, and storm-track climatology), so every main-text and SI
+figure script can be reproduced from this one download.
 
 ---
 
@@ -29,12 +32,12 @@ data/
 │   ├── amoc_lookup.pkl                  # AMOC-strength cache (Fig. 1)
 │   ├── gdf_regions.pkl                  # 9 source-region polygons (GeoDataFrame)
 │   ├── regionalmeltdischarge_withd18O.pkl   # per-region melt + d18O table (GeoDataFrame)
-│   └── dyestuff_modelpaper/
-│       ├── dye_regions_norm.nc          # normalized dye-region field
-│       ├── mean_dye_{cold,merid,zonal}.nc   # dye-mean fields per AMOC mode (9 dyes)
-│       ├── land_uptakemasks.pkl         # land proxy-site uptake masks (Fig. 7)
-│       ├── proxymag.pkl                 # precomputed proxy-site contributions (Fig. 7)
-│       └── {cold,merid,zonal}/{scenario}_mean_std.nc   # surface mean/std fields
+│   ├── dyestuff_modelpaper/
+│   │   ├── dye_regions_norm.nc          # normalized dye-region field
+│   │   ├── mean_dye_{cold,merid,zonal}.nc   # dye-mean fields per AMOC mode (9 dyes)
+│   │   ├── land_uptakemasks.pkl         # land proxy-site uptake masks (Fig. 7)
+│   │   ├── proxymag.pkl                 # precomputed proxy-site contributions (Fig. 7)
+│   │   └── {cold,merid,zonal}/{scenario}_mean_std.nc   # surface mean/std fields
 │   └── atmo/                            # atmosphere across AMOC modes (SI figures)
 │       ├── sat_mean.nc                  # annual-mean surface air temperature
 │       ├── wind850_mean.nc              # annual-mean 850 hPa u, v
@@ -70,11 +73,13 @@ instead of re-reducing raw model output.
 #### `intermediates/atmo/` — atmosphere across AMOC modes (SI, ~3 MB)
 Light 2-D atmospheric fields for the three AMOC modes at 17.8 ka (`cold` = xpraj,
 `zonal` = xprak, `merid` = xpral), stacked along a `mode` coordinate. Built by
-`scripts/precompute_atmo.py` from raw HadCM3 time-series (the daily MSL field is too
-heavy to ship, so this reduction runs where the raw data live).
+`scripts/precompute_atmo.py` from raw HadCM3 time-series. The daily MSL field is far too
+heavy to ship (thousands of per-month files, ~500 model-years), so the storm-track step is
+streamed on the HPC — each chunk is band-passed in memory and its variance accumulated —
+and only the small climatology below is saved; the full daily record is never written out.
 - `sat_mean.nc` — annual-mean surface air temperature (`temp_mm_srf`, in K).
 - `wind850_mean.nc` — annual-mean 850 hPa wind components (`u`, `v`).
-- `stormtrack.nc` — 2–6 day band-pass variance of mean sea-level pressure (`annual`, `djfm`; hPa²).
+- `stormtrack.nc` — 2–6 day band-pass MSL-variance climatology (`annual`, `djfm`; hPa²).
 - `seaice_monthly.nc` — sea-ice concentration monthly climatology (`iceconc`, 12 months) for the 50 % extent overlay.
 
 ### `trajectories/` — atmospheric back-trajectories (~6 MB)

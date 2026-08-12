@@ -9,9 +9,12 @@ Figure-generating scripts and light plotting data for the manuscript
 > L. Endres, R. Ivanovic, Y. Rome, J. Tindall, I. Thurnherr, M. Sprenger, H. Stoll
 > (submitted to *Paleoceanography and Paleoclimatology*, AGU).
 
-Each script reproduces one main-text figure (Fig. 1–7) from a small, plotting-ready
-subset of the HadCM3 dye-tracer model output. The heavy raw model data have been
-reduced offline to just the fields needed for plotting (~45 MB total).
+Each script reproduces one figure from a small, plotting-ready subset of the HadCM3
+dye-tracer model output — the seven main-text figures (Fig. 1–7) **and** the
+supplementary AMOC-mode atmosphere figures (surface air temperature, 850 hPa wind,
+storm-track climatology). The heavy raw model data have been reduced offline to just the
+fields needed for plotting (~45 MB total), so the Zenodo bundle now covers every main and
+SI figure.
 
 ---
 
@@ -150,7 +153,10 @@ archive from the Zenodo record and unpack it at the repo root as described in **
 The bundle is ~45 MB (reduced from ~735 MB of raw HadCM3 output) and contains only the
 fields required for plotting: model input grids, precomputed dye-field / sea-ice / MLD /
 AMOC lookup caches, dye-mean fields, surface-only per-scenario mean/std fields, region and
-proxy-site tables, and the six atmospheric trajectory files actually plotted. See
+proxy-site tables, the six atmospheric trajectory files actually plotted, and the
+`intermediates/atmo/` fields for the supplementary AMOC-mode atmosphere figures (SAT,
+850 hPa wind, storm-track climatology, sea-ice). All main-text **and** SI figures can
+therefore be reproduced from this single download. See
 [`data/README.md`](data/README.md) for the full manifest, field descriptions, and
 provenance notes.
 
