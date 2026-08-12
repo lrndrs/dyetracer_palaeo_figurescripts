@@ -26,7 +26,9 @@ dyetracer_palaeo_figurescripts/
 │   ├── fig3_dye_propagation.py      # Fig. 3  dye propagation / scenario maps
 │   ├── fig4_fig5_scenario_maps.py   # Fig. 4 & 5  GIN/IRD scenario maps, ratios, scatter
 │   ├── fig6_trajectories.py         # Fig. 6  atmospheric back-trajectories
-│   └── fig7_proxy_summary.py        # Fig. 7  proxy-site d18O contribution summary
+│   ├── fig7_proxy_summary.py        # Fig. 7  proxy-site d18O contribution summary
+│   ├── precompute_atmo.py           # (run on HPC) caches SAT / 850hPa wind / storm-track fields
+│   └── fig_atmo_modes.py            # SI  surface air temp, 850hPa wind, storm track by AMOC mode
 ├── mymodules/                   # analysis helpers (see "Bundled code" below)
 │   ├── dyefield_computation.py      # dye-field / lookup pipeline (run_pipeline etc.)
 │   ├── d18O_computation.py          # d18O results + area-weighted means
@@ -108,7 +110,17 @@ python scripts/fig3_dye_propagation.py
 python scripts/fig4_fig5_scenario_maps.py
 python scripts/fig6_trajectories.py
 python scripts/fig7_proxy_summary.py
+
+# SI atmosphere figures (SAT / 850hPa wind / storm track):
+python scripts/fig_atmo_modes.py
 ```
+
+The atmosphere figures read a small precomputed bundle in
+`data/intermediates/atmo/` (SAT mean, 850 hPa wind mean, band-pass storm-track
+variance, sea-ice climatology, for the three AMOC modes at 17.8 ka). That bundle
+is produced by `scripts/precompute_atmo.py`, which must be run **where the raw
+HadCM3 time-series live** (the daily MSL field is too heavy to ship). It is
+included in the Zenodo data archive, so a normal plotting run does not need it.
 
 Each script is self-contained: it adds the repo root to `sys.path`, changes to the repo
 root, reads from `data/`, and writes its figure(s) to `figures/`. Outputs:
@@ -121,6 +133,7 @@ root, reads from `data/`, and writes its figure(s) to `figures/`. Outputs:
 | `fig4_fig5_scenario_maps.py` | `Fig5_Rev_ScenarioMap.pdf`, `Fig5_Rev_ScenarioMap_predict.pdf`, `Fig5_Rev_Ratio.pdf`, `Fig4_Rev_GIN_IRD.pdf`, `Fig4_Rev_GIN_IRD_predict_combined.pdf`, `Fig4_Rev_Scatter_RegionCompared_predicted.pdf` |
 | `fig6_trajectories.py` | `Fig6_Rev_Trajectories.pdf` |
 | `fig7_proxy_summary.py` | `Fig7_a_ProxySites_Map.pdf`, `Fig7_b_ProxySites_Bars_var.pdf`, `SFig7_b_ProxySites_Bars_var.pdf` + per-scenario `*_proxy_d18O_contributions.csv` |
+| `fig_atmo_modes.py` | `SFig_Atmo_SAT.pdf`, `SFig_Atmo_Wind850.pdf`, `SFig_Atmo_StormTrack_annual.pdf`, `SFig_Atmo_StormTrack_DJFM.pdf` (SI: atmosphere across AMOC modes) |
 
 ---
 

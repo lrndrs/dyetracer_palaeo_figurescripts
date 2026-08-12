@@ -35,6 +35,11 @@ data/
 │       ├── land_uptakemasks.pkl         # land proxy-site uptake masks (Fig. 7)
 │       ├── proxymag.pkl                 # precomputed proxy-site contributions (Fig. 7)
 │       └── {cold,merid,zonal}/{scenario}_mean_std.nc   # surface mean/std fields
+│   └── atmo/                            # atmosphere across AMOC modes (SI figures)
+│       ├── sat_mean.nc                  # annual-mean surface air temperature
+│       ├── wind850_mean.nc              # annual-mean 850 hPa u, v
+│       ├── stormtrack.nc                # 2–6 day band-pass MSL variance (annual + DJFM)
+│       └── seaice_monthly.nc            # sea-ice concentration monthly climatology
 └── trajectories/
     └── {NGRIP,NISA_LaVallina,NonameCave}_{xqeic,xqeie}_th00_UTOT_weighted.nc  # Fig. 6
 ```
@@ -61,6 +66,16 @@ instead of re-reducing raw model output.
 - `dyestuff_modelpaper/land_uptakemasks.pkl` — land proxy-site uptake masks (keys: `NISA_LaVallina`, `NonameCave`, `NGRIP`).
 - `dyestuff_modelpaper/proxymag.pkl` — precomputed per-site, per-dye d18O contributions (built by `scripts/precompute_proxymag.py`).
 - `dyestuff_modelpaper/{cold,merid,zonal}/{17.8k,18.2k,19.4k,20.7k}_mean_std.nc` — **surface-only** per-scenario dye mean/std fields (18 variables `dye00_mean/std … dye08_mean/std`).
+
+#### `intermediates/atmo/` — atmosphere across AMOC modes (SI, ~3 MB)
+Light 2-D atmospheric fields for the three AMOC modes at 17.8 ka (`cold` = xpraj,
+`zonal` = xprak, `merid` = xpral), stacked along a `mode` coordinate. Built by
+`scripts/precompute_atmo.py` from raw HadCM3 time-series (the daily MSL field is too
+heavy to ship, so this reduction runs where the raw data live).
+- `sat_mean.nc` — annual-mean surface air temperature (`temp_mm_srf`, in K).
+- `wind850_mean.nc` — annual-mean 850 hPa wind components (`u`, `v`).
+- `stormtrack.nc` — 2–6 day band-pass variance of mean sea-level pressure (`annual`, `djfm`; hPa²).
+- `seaice_monthly.nc` — sea-ice concentration monthly climatology (`iceconc`, 12 months) for the 50 % extent overlay.
 
 ### `trajectories/` — atmospheric back-trajectories (~6 MB)
 The six trajectory files actually plotted in Fig. 6 (of 24 total): three proxy locations
