@@ -34,9 +34,9 @@ data/
 │       ├── mean_dye_{cold,merid,zonal}.nc   # dye-mean fields per AMOC mode (9 dyes)
 │       ├── land_uptakemasks.pkl         # land proxy-site uptake masks (Fig. 7)
 │       ├── proxymag.pkl                 # precomputed proxy-site contributions (Fig. 7)
-│       └── {cold,merid,zonal}/{scenario}_mean_std.nc   # surface mean/std fields
+│       └── {cold,merid,zonal}/{scenario}_mean_std.nc   # surface mean/std fields for the individual scenarios
 └── trajectories/
-    └── {NGRIP,NISA_LaVallina,NonameCave}_{xqeic,xqeie}_th00_UTOT_weighted.nc  # Fig. 6
+    └── {NGRIP,NISA_LaVallina,NonameCave}_{xqeic,xqeie}_th00_UTOT_weighted.nc  # Computed Proxy Site Uptake (Fig. 6)
 ```
 
 ---
@@ -102,3 +102,8 @@ recreate them.
 Base climate simulations: HadCM3 (BRIDGE) with GLAC-1D meltwater forcing, following
 Rome et al. (2022). The meltwater-routing toolbox (`mw_protocol`) is external:
 Olnavy (2022), Zenodo, https://doi.org/10.5281/zenodo.6788389.
+Meltwater discharge estimation is based on GLAC-1D ice sheet history (Ivanovic et al., 2016).
+
+Romé, Y. M., Ivanovic, R. F., Gregoire, L. J., Sherriff‐Tadano, S., & Valdes, P. J. (2022). Millennial‐Scale Climate Oscillations Triggered by Deglacial Meltwater Discharge in Last Glacial Maximum Simulations. Paleoceanography and Paleoclimatology, 37(10), e2022PA004451. https://doi.org/10.1029/2022PA004451
+Ivanovic, R. F., Gregoire, L. J., Kageyama, M., Roche, D. M., Valdes, P. J., Burke, A., Drummond, R., Peltier, W. R., & Tarasov, L. (2016). Transient climate simulations of the deglaciation 21–9 thousand years before present (version 1) – PMIP4 Core experiment design and boundary conditions. Geoscientific Model Development, 9(7), 2563–2587. https://doi.org/10.5194/gmd-9-2563-2016
+
