@@ -9,7 +9,10 @@ git** (`.gitignore`: `data/*`) — download it from the Zenodo record and unpack
 > **Zenodo DOI:** [10.5281/zenodo.21828703](https://doi.org/10.5281/zenodo.21828703)
 
 Total ~45 MB, reduced from ~735 MB of raw HadCM3 output — only the fields needed for
-plotting are included.
+plotting are included. This bundle now also contains the data for the **supplementary
+figures** (the `intermediates/atmo/` fields for the AMOC-mode atmosphere figures — surface
+air temperature, 850 hPa wind, and storm-track climatology), so every main-text and SI
+figure script can be reproduced from this one download.
 
 ---
 
@@ -29,14 +32,19 @@ data/
 │   ├── amoc_lookup.pkl                  # AMOC-strength cache (Fig. 1)
 │   ├── gdf_regions.pkl                  # 9 source-region polygons (GeoDataFrame)
 │   ├── regionalmeltdischarge_withd18O.pkl   # per-region melt + d18O table (GeoDataFrame)
-│   └── dyestuff_modelpaper/
-│       ├── dye_regions_norm.nc          # normalized dye-region field
-│       ├── mean_dye_{cold,merid,zonal}.nc   # dye-mean fields per AMOC mode (9 dyes)
-│       ├── land_uptakemasks.pkl         # land proxy-site uptake masks (Fig. 7)
-│       ├── proxymag.pkl                 # precomputed proxy-site contributions (Fig. 7)
-│       └── {cold,merid,zonal}/{scenario}_mean_std.nc   # surface mean/std fields for the individual scenarios
+│   ├── dyestuff_modelpaper/
+│   │   ├── dye_regions_norm.nc          # normalized dye-region field
+│   │   ├── mean_dye_{cold,merid,zonal}.nc   # dye-mean fields per AMOC mode (9 dyes)
+│   │   ├── land_uptakemasks.pkl         # land proxy-site uptake masks (Fig. 7)
+│   │   ├── proxymag.pkl                 # precomputed proxy-site contributions (Fig. 7)
+│   │   └── {cold,merid,zonal}/{scenario}_mean_std.nc   # surface mean/std fields
+│   └── atmo/                            # atmosphere across AMOC modes (SI figures)
+│       ├── sat_mean.nc                  # annual-mean surface air temperature
+│       ├── wind850_mean.nc              # annual-mean 850 hPa u, v
+│       ├── stormtrack.nc                # 2–6 day band-pass MSL variance (annual + DJFM)
+│       └── seaice_monthly.nc            # sea-ice concentration monthly climatology
 └── trajectories/
-    └── {NGRIP,NISA_LaVallina,NonameCave}_{xqeic,xqeie}_th00_UTOT_weighted.nc  # Computed Proxy Site Uptake (Fig. 6)
+    └── {NGRIP,NISA_LaVallina,NonameCave}_{xqeic,xqeie}_th00_UTOT_weighted.nc  # Fig. 6
 ```
 
 ---
@@ -61,6 +69,18 @@ instead of re-reducing raw model output.
 - `dyestuff_modelpaper/land_uptakemasks.pkl` — land proxy-site uptake masks (keys: `NISA_LaVallina`, `NonameCave`, `NGRIP`).
 - `dyestuff_modelpaper/proxymag.pkl` — precomputed per-site, per-dye d18O contributions (built by `scripts/precompute_proxymag.py`).
 - `dyestuff_modelpaper/{cold,merid,zonal}/{17.8k,18.2k,19.4k,20.7k}_mean_std.nc` — **surface-only** per-scenario dye mean/std fields (18 variables `dye00_mean/std … dye08_mean/std`).
+
+#### `intermediates/atmo/` — atmosphere across AMOC modes (SI, ~3 MB)
+Light 2-D atmospheric fields for the three AMOC modes at 17.8 ka (`cold` = xpraj,
+`zonal` = xprak, `merid` = xpral), stacked along a `mode` coordinate. Built by
+`scripts/precompute_atmo.py` from raw HadCM3 time-series. The daily MSL field is far too
+heavy to ship (thousands of per-month files, ~500 model-years), so the storm-track step is
+streamed on the HPC — each chunk is band-passed in memory and its variance accumulated —
+and only the small climatology below is saved; the full daily record is never written out.
+- `sat_mean.nc` — annual-mean surface air temperature (`temp_mm_srf`, in K).
+- `wind850_mean.nc` — annual-mean 850 hPa wind components (`u`, `v`).
+- `stormtrack.nc` — 2–6 day band-pass MSL-variance climatology (`annual`, `djfm`; hPa²).
+- `seaice_monthly.nc` — sea-ice concentration monthly climatology (`iceconc`, 12 months) for the 50 % extent overlay.
 
 ### `trajectories/` — atmospheric back-trajectories (~6 MB)
 The six trajectory files actually plotted in Fig. 6 (of 24 total): three proxy locations
@@ -102,8 +122,3 @@ recreate them.
 Base climate simulations: HadCM3 (BRIDGE) with GLAC-1D meltwater forcing, following
 Rome et al. (2022). The meltwater-routing toolbox (`mw_protocol`) is external:
 Olnavy (2022), Zenodo, https://doi.org/10.5281/zenodo.6788389.
-Meltwater discharge estimation is based on GLAC-1D ice sheet history (Ivanovic et al., 2016).
-
-Romé, Y. M., Ivanovic, R. F., Gregoire, L. J., Sherriff‐Tadano, S., & Valdes, P. J. (2022). Millennial‐Scale Climate Oscillations Triggered by Deglacial Meltwater Discharge in Last Glacial Maximum Simulations. Paleoceanography and Paleoclimatology, 37(10), e2022PA004451. https://doi.org/10.1029/2022PA004451
-Ivanovic, R. F., Gregoire, L. J., Kageyama, M., Roche, D. M., Valdes, P. J., Burke, A., Drummond, R., Peltier, W. R., & Tarasov, L. (2016). Transient climate simulations of the deglaciation 21–9 thousand years before present (version 1) – PMIP4 Core experiment design and boundary conditions. Geoscientific Model Development, 9(7), 2563–2587. https://doi.org/10.5194/gmd-9-2563-2016
-
