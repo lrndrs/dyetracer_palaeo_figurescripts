@@ -34,10 +34,10 @@ data/
 │   ├── regionalmeltdischarge_withd18O.pkl   # per-region melt + d18O table (GeoDataFrame)
 │   ├── dyestuff_modelpaper/
 │   │   ├── dye_regions_norm.nc          # normalized dye-region field
-│   │   ├── mean_dye_{cold,merid,zonal}.nc   # dye-mean fields per AMOC mode (9 dyes)
+│   │   ├── mean_dye_{cold,merid,zonal}.nc   # dye-mean fields per AMOC mode (9 dyes) - used for prediction
 │   │   ├── land_uptakemasks.pkl         # land proxy-site uptake masks (Fig. 7)
 │   │   ├── proxymag.pkl                 # precomputed proxy-site contributions (Fig. 7)
-│   │   └── {cold,merid,zonal}/{scenario}_mean_std.nc   # surface mean/std fields
+│   │   └── {cold,merid,zonal}/{scenario}_mean_std.nc   # surface mean/std fields of individual simulations - used for simulated
 │   └── atmo/                            # atmosphere across AMOC modes (SI figures)
 │       ├── sat_mean.nc                  # annual-mean surface air temperature
 │       ├── wind850_mean.nc              # annual-mean 850 hPa u, v
