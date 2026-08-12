@@ -53,13 +53,25 @@ def _pick_msl_var(ds):
         f"Could not identify the MSL variable in {list(ds.data_vars)}. "
         "Expected `p_dm_msl`; edit _pick_msl_var() to name the right field.")
 
+def _timedelta_to_days(td):
+    """Gap between two timesteps -> days, for numpy.timedelta64, python
+    datetime.timedelta, or cftime timedeltas (non-standard calendars)."""
+    if isinstance(td, np.timedelta64):
+        return td / np.timedelta64(1, "D")
+    if hasattr(td, "total_seconds"):          # datetime.timedelta / cftime
+        return td.total_seconds() / 86400.0
+    if hasattr(td, "days"):
+        return td.days + getattr(td, "seconds", 0) / 86400.0
+    return float(td)
+
 def _assert_daily(ds):
     """Storm-track band-pass is only meaningful on sub-monthly timesteps.
     Stop loudly if the file turns out to hold true monthly means."""
     t = ds["t"].values
     if t.size < 4:
         raise ValueError(f"MSL file has only {t.size} timesteps; need daily data.")
-    dt_days = np.median(np.diff(t)).astype("timedelta64[h]") / np.timedelta64(24, "h")
+    gaps = [_timedelta_to_days(d) for d in np.diff(t)]
+    dt_days = float(np.median(gaps))
     if dt_days > 20:
         raise ValueError(
             f"MSL timestep is ~{float(dt_days):.0f} days — this looks like monthly "
