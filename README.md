@@ -79,7 +79,7 @@ Download the data archive and unpack it so that the `data/` folder sits at the r
 
 ```bash
 # from the repo root, after downloading the Zenodo data archive:
-tar -xzf dyetracer_data_bundle.tar.gz      # creates ./data/...
+unzip dyetracer_data_bundle_v1.1.zip       # creates ./data/...
 ```
 
 The scripts expect data under `data/inputs/`, `data/intermediates/`, and
